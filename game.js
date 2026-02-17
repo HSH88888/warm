@@ -394,9 +394,9 @@ class Worm {
                     break;
                 case 'veryhard':
                     this.baseSpeed = 4.0;
-                    this.turnSpeed = 0.15;
-                    this.reactionDist = 200;
-                    this.aggression = 1.0;
+                    this.turnSpeed = 0.2;
+                    this.reactionDist = 300;
+                    this.aggression = 0.2; // Smart: Focus on food, attack only if easy
                     break;
                 case 'normal':
                 default:
@@ -439,10 +439,12 @@ class Worm {
 
             if (this.game.mouse.down && this.length > 20) {
                 this.speed = BOOST_SPEED;
+                // Bigger worms drop more/bigger poop
                 if (Math.random() < 0.2) {
-                    this.length -= 0.5;
+                    const dropVal = Math.max(1, Math.floor(this.length / 50));
+                    this.length -= dropVal * 0.5;
                     const tail = this.nodes[this.nodes.length - 1];
-                    this.game.spawnFood({ x: tail.x, y: tail.y }, 1);
+                    this.game.spawnFood({ x: tail.x, y: tail.y }, dropVal);
                 }
             } else {
                 this.speed = this.baseSpeed;
@@ -471,14 +473,21 @@ class Worm {
 
                 // Otherwise seek food
                 if (!bestTarget) {
-                    // Start looking at random nearby food
-                    // Optimization: look at 10 random foods
-                    for (let i = 0; i < 10; i++) {
+                    // Optimization: check more foods based on difficulty
+                    const checkCount = (this.difficulty === 'veryhard' || this.difficulty === 'hard') ? 50 : 10;
+
+                    for (let i = 0; i < checkCount; i++) {
                         const f = this.game.foods[randInt(0, this.game.foods.length)];
                         if (!f) continue;
                         const d = dist(this.x, this.y, f.x, f.y);
-                        if (d < minDist) {
-                            minDist = d;
+
+                        // Hell/Hard logic: Value matters more
+                        let score = d;
+                        if (this.difficulty === 'veryhard') score /= (f.val * 2); // Prefer high value
+                        else if (this.difficulty === 'hard') score /= f.val;
+
+                        if (score < minDist) {
+                            minDist = score;
                             bestTarget = f;
                         }
                     }
@@ -486,6 +495,11 @@ class Worm {
 
                 if (bestTarget) {
                     this.targetAngle = Math.atan2(bestTarget.y - this.y, bestTarget.x - this.x);
+
+                    // Hell AI Boosts for big food
+                    if (this.difficulty === 'veryhard' && bestTarget.val > 5 && this.length > 30) {
+                        this.speed = BOOST_SPEED;
+                    }
                 } else {
                     if (Math.random() < 0.05) this.targetAngle += rand(-1, 1);
                 }

@@ -150,6 +150,14 @@ class Game {
                 opt.classList.add('selected');
             });
         });
+
+        // Difficulty Selector
+        document.querySelectorAll('.diff-btn').forEach(btn => {
+            btn.addEventListener('click', () => {
+                document.querySelectorAll('.diff-btn').forEach(b => b.classList.remove('selected'));
+                btn.classList.add('selected');
+            });
+        });
     }
 
     updateJoystick(touchX, touchY) {
@@ -175,6 +183,9 @@ class Game {
 
         this.playerName = name;
         this.playerColor = color;
+        const diffBtn = document.querySelector('.diff-btn.selected');
+        this.difficulty = diffBtn ? diffBtn.dataset.diff : 'normal';
+
         this.isRunning = true;
 
         this.foods = [];
@@ -213,7 +224,7 @@ class Game {
         const names = ['Alpha', 'Beta', 'Gamma', 'Delta', 'Snakey', 'Crawler', 'NopeRope', 'Snek', 'Boss', 'Eater'];
         const name = names[randInt(0, names.length)];
         const color = `hsl(${rand(0, 360)}, 70%, 50%)`;
-        const ai = new Worm(this, false, name, color);
+        const ai = new Worm(this, false, name, color, this.difficulty);
         ai.x = rand(-WORLD_SIZE, WORLD_SIZE);
         ai.y = rand(-WORLD_SIZE, WORLD_SIZE);
         this.worms.push(ai);
@@ -350,18 +361,53 @@ class Game {
 }
 
 class Worm {
-    constructor(game, isPlayer, name, color) {
+    constructor(game, isPlayer, name, color, difficulty = 'normal') {
         this.game = game;
         this.isPlayer = isPlayer;
         this.name = name;
         this.color = color;
+        this.difficulty = difficulty;
 
         this.x = 0;
         this.y = 0;
         this.angle = rand(0, Math.PI * 2);
         this.targetAngle = this.angle;
 
-        this.speed = BASE_SPEED;
+        // Difficulty Stats
+        this.baseSpeed = BASE_SPEED;
+        this.turnSpeed = TURN_SPEED;
+        this.reactionDist = 100;
+        this.aggression = 0; // 0 to 1
+
+        if (!isPlayer) {
+            switch (difficulty) {
+                case 'easy':
+                    this.baseSpeed = 2.5;
+                    this.turnSpeed = 0.04;
+                    this.reactionDist = 50;
+                    break;
+                case 'hard':
+                    this.baseSpeed = 3.5;
+                    this.turnSpeed = 0.12;
+                    this.reactionDist = 150;
+                    this.aggression = 0.5;
+                    break;
+                case 'veryhard':
+                    this.baseSpeed = 4.0;
+                    this.turnSpeed = 0.15;
+                    this.reactionDist = 200;
+                    this.aggression = 1.0;
+                    break;
+                case 'normal':
+                default:
+                    this.baseSpeed = 3.0;
+                    this.turnSpeed = 0.08;
+                    this.reactionDist = 100;
+                    break;
+            }
+        }
+
+        this.speed = this.baseSpeed;
         this.nodes = [];
         this.length = 20;
         this.radius = 10;
@@ -399,15 +445,62 @@ class Worm {
                     this.game.spawnFood({ x: tail.x, y: tail.y }, 1);
                 }
             } else {
-                this.speed = BASE_SPEED;
+                this.speed = this.baseSpeed;
             }
         } else {
-            if (Math.random() < 0.05) this.targetAngle += rand(-1, 1);
-            if (this.x < -WORLD_SIZE + 100) this.targetAngle = 0;
-            if (this.x > WORLD_SIZE - 100) this.targetAngle = Math.PI;
-            if (this.y < -WORLD_SIZE + 100) this.targetAngle = Math.PI / 2;
-            if (this.y > WORLD_SIZE - 100) this.targetAngle = -Math.PI / 2;
-            this.speed = BASE_SPEED;
+            // AI Behavior
+            // 1. Check bounds
+            let avoidBounds = false;
+            if (this.x < -WORLD_SIZE + 200) { this.targetAngle = 0; avoidBounds = true; }
+            else if (this.x > WORLD_SIZE - 200) { this.targetAngle = Math.PI; avoidBounds = true; }
+            else if (this.y < -WORLD_SIZE + 200) { this.targetAngle = Math.PI / 2; avoidBounds = true; }
+            else if (this.y > WORLD_SIZE - 200) { this.targetAngle = -Math.PI / 2; avoidBounds = true; }
+
+            if (!avoidBounds) {
+                // 2. Seek Food or Chase Player
+                let bestTarget = null;
+                let minDist = 1000;
+
+                // Aggressive AI targets player
+                if (this.aggression > 0 && this.game.player && this.game.player.alive) {
+                    const d = dist(this.x, this.y, this.game.player.x, this.game.player.y);
+                    if (d < 500 * this.aggression) {
+                        bestTarget = this.game.player;
+                    }
+                }
+
+                // Otherwise seek food
+                if (!bestTarget) {
+                    // Start looking at random nearby food
+                    // Optimization: look at 10 random foods
+                    for (let i = 0; i < 10; i++) {
+                        const f = this.game.foods[randInt(0, this.game.foods.length)];
+                        if (!f) continue;
+                        const d = dist(this.x, this.y, f.x, f.y);
+                        if (d < minDist) {
+                            minDist = d;
+                            bestTarget = f;
+                        }
+                    }
+                }
+
+                if (bestTarget) {
+                    this.targetAngle = Math.atan2(bestTarget.y - this.y, bestTarget.x - this.x);
+                } else {
+                    if (Math.random() < 0.05) this.targetAngle += rand(-1, 1);
+                }
+
+                // 3. Avoid Collisions (Simple Raycast feeler)
+                // Look ahead
+                /* Complex avoidance omitted for brevity, keeping simple wander/seek */
+            }
+
+            this.speed = this.baseSpeed;
+
+            // Very Hard AI boosts occasionally
+            if (this.difficulty === 'veryhard' && this.length > 50 && Math.random() < 0.01) {
+                this.speed = BOOST_SPEED;
+            }
         }
     }
 
@@ -415,7 +508,7 @@ class Worm {
         let diff = this.targetAngle - this.angle;
         while (diff < -Math.PI) diff += Math.PI * 2;
         while (diff > Math.PI) diff -= Math.PI * 2;
-        this.angle += diff * TURN_SPEED;
+        this.angle += diff * this.turnSpeed;
 
         const vx = Math.cos(this.angle) * this.speed;
         const vy = Math.sin(this.angle) * this.speed;

@@ -145,6 +145,14 @@ class Game {
         document.getElementById('btn-resume').addEventListener('click', () => this.togglePause());
         document.getElementById('btn-quit').addEventListener('click', () => location.reload());
 
+        // Zoom Controls
+        const btnZoomIn = document.getElementById('btn-zoom-in');
+        const btnZoomOut = document.getElementById('btn-zoom-out');
+        if (btnZoomIn && btnZoomOut) {
+            btnZoomIn.addEventListener('click', () => this.adjustZoom(0.1));
+            btnZoomOut.addEventListener('click', () => this.adjustZoom(-0.1));
+        }
+
         // Color Picker Logic
         document.querySelectorAll('.color-option').forEach(opt => {
             opt.addEventListener('click', () => {
@@ -261,15 +269,18 @@ class Game {
         ctx.fillStyle = '#121212';
         ctx.fillRect(0, 0, this.canvas.width, this.canvas.height);
 
-        ctx.save();
+        // Camera Follow (World Coordinates)
         if (this.player && this.player.alive) {
-            const targetX = -this.player.x + this.canvas.width / 2;
-            const targetY = -this.player.y + this.canvas.height / 2;
-            this.camera.x = lerp(this.camera.x, targetX, 0.1);
-            this.camera.y = lerp(this.camera.y, targetY, 0.1);
+            this.camera.x = lerp(this.camera.x, this.player.x, 0.1);
+            this.camera.y = lerp(this.camera.y, this.player.y, 0.1);
         }
-        ctx.translate(this.camera.x, this.camera.y);
 
+        // Apply Transform: Center Screen -> Scale -> Translate to Camera World Pos
+        ctx.translate(this.canvas.width / 2, this.canvas.height / 2);
+        ctx.scale(this.camera.zoom, this.camera.zoom);
+        ctx.translate(-this.camera.x, -this.camera.y);
+
+        // Draw World Boundaries
         ctx.strokeStyle = '#333';
         ctx.lineWidth = 5;
         ctx.strokeRect(-WORLD_SIZE, -WORLD_SIZE, WORLD_SIZE * 2, WORLD_SIZE * 2);
@@ -330,6 +341,12 @@ class Game {
                 if (mobile) mobile.style.display = 'block';
             }
         }
+    }
+
+    adjustZoom(delta) {
+        this.camera.zoom += delta;
+        if (this.camera.zoom < 0.5) this.camera.zoom = 0.5; // Max Zoom Out
+        if (this.camera.zoom > 1.5) this.camera.zoom = 1.5; // Max Zoom In
     }
 
     updateHUD() {

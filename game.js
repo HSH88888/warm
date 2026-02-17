@@ -31,12 +31,10 @@ class Game {
         // Joystick State
         this.joystick = {
             active: false,
-            angle: 0,
             baseX: 0,
             baseY: 0,
-            stickX: 0,
-            stickY: 0,
-            radius: 50 // Handle move radius
+            angle: 0,
+            radius: 40 // Reduced from 75
         };
 
         this.isRunning = false;
@@ -578,7 +576,14 @@ class Worm {
         let diff = this.targetAngle - this.angle;
         while (diff < -Math.PI) diff += Math.PI * 2;
         while (diff > Math.PI) diff -= Math.PI * 2;
-        this.angle += diff * this.turnSpeed;
+
+        // Mobile Sensitivity (Half Turn Speed)
+        let finalTurnSpeed = this.turnSpeed;
+        if (this.isPlayer && this.game.joystick.active) {
+            finalTurnSpeed *= 0.5;
+        }
+
+        this.angle += diff * finalTurnSpeed;
 
         const vx = Math.cos(this.angle) * this.speed;
         const vy = Math.sin(this.angle) * this.speed;

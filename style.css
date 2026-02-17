@@ -393,22 +393,41 @@ body {
 }
 
 /* ═══ Mobile Controls ═══ */
+@media (max-width: 768px) {
+    #leaderboard {
+        transform: scale(0.7);
+        transform-origin: top right;
+        right: 10px;
+        top: 60px;
+        max-width: 200px;
+    }
+
+    #milestone-board {
+        transform: scale(0.8);
+        transform-origin: top left;
+        left: 10px;
+        top: 50px;
+    }
+}
+
+/* Mobile Controls */
 #mobile-controls {
     position: absolute;
-    width: 100%;
-    height: 100%;
     top: 0;
     left: 0;
+    width: 100%;
+    height: 100%;
     pointer-events: none;
     z-index: 200;
 }
 
 #joystick-container {
     position: absolute;
-    bottom: 50px;
-    left: 50px;
-    width: 150px;
-    height: 150px;
+    bottom: 30px;
+    left: 30px;
+    width: 80px;
+    /* Reduced from 150px */
+    height: 80px;
     background: rgba(255, 255, 255, 0.1);
     border: 2px solid rgba(255, 255, 255, 0.3);
     border-radius: 50%;
@@ -417,16 +436,16 @@ body {
 }
 
 #joystick-handle {
+    width: 30px;
+    /* Reduced from 50px */
+    height: 30px;
+    background: rgba(51, 204, 255, 0.8);
+    border-radius: 50%;
     position: absolute;
     top: 50%;
     left: 50%;
-    width: 50px;
-    height: 50px;
-    background: rgba(255, 255, 255, 0.8);
-    border-radius: 50%;
     transform: translate(-50%, -50%);
-    pointer-events: none;
-    transition: transform 0.1s;
+    box-shadow: 0 0 10px var(--secondary);
 }
 
 #mobile-boost-btn {
@@ -441,7 +460,8 @@ body {
     font-size: 2rem;
     color: white;
     pointer-events: auto;
-    display: flex;
+    display: none !important;
+    /* Removed as requested */
     align-items: center;
     justify-content: center;
     touch-action: manipulation;

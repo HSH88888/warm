@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html lang="ko">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Warm - The Worm Game 🐛</title>
+    <link rel="stylesheet" href="style.css">
+    <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@400;600&display=swap" rel="stylesheet">
+</head>
+
+<body>
+    <canvas id="game-canvas"></canvas>
+
+    <!-- ═══ Start Screen ═══ -->
+    <div id="start-screen">
+        <div class="logo">WARM</div>
+        <div class="subtitle">Eat, Grow, Survive</div>
+
+        <div class="input-group">
+            <input type="text" id="player-name" placeholder="닉네임 (Nickname)" maxlength="10">
+        </div>
+
+        <div class="color-picker" id="color-picker">
+            <div class="color-option selected" style="background: #ff3366;" data-color="#ff3366"></div>
+            <div class="color-option" style="background: #33ccff;" data-color="#33ccff"></div>
+            <div class="color-option" style="background: #66ff33;" data-color="#66ff33"></div>
+            <div class="color-option" style="background: #ffcc00;" data-color="#ffcc00"></div>
+            <div class="color-option" style="background: #cc33ff;" data-color="#cc33ff"></div>
+            <div class="color-option" style="background: #ffffff;" data-color="#ffffff"></div>
+        </div>
+
+        <button id="btn-start" class="btn-primary">게임 시작 (Start Game)</button>
+
+        <div class="how-to-play">
+            <p>🖱️ 마우스 이동: 방향 조절</p>
+            <p>🖱️ 클릭/스페이스바: 가속 (내 꼬리가 짧아집니다!)</p>
+            <p>💀 머리가 다른 지렁이에 닿으면 사망</p>
+        </div>
+    </div>
+
+    <!-- ═══ HUD ═══ -->
+    <div id="hud" style="display:none;">
+        <div class="score-board">
+            <span>길이: <b id="score-length">10</b></span>
+            <span>킬: <b id="score-kill">0</b></span>
+        </div>
+
+        <div class="leaderboard">
+            <h3>Top 10</h3>
+            <ul id="leaderboard-list">
+                <!-- Rank Items -->
+            </ul>
+        </div>
+
+        <canvas id="minimap"></canvas>
+
+        <div id="audio-controls">
+            <button id="btn-bgm">🔊 BGM ON</button>
+        </div>
+    </div>
+
+    <!-- ═══ Game Over Screen ═══ -->
+    <div id="game-over-screen" style="display:none;">
+        <h2>GAME OVER</h2>
+        <div class="final-stats">
+            <p>최종 길이: <span id="final-length">0</span></p>
+            <p>처치: <span id="final-kill">0</span></p>
+        </div>
+        <div class="btn-group">
+            <button id="btn-hunt" class="btn-secondary">사냥하기 (Menu)</button>
+            <button id="btn-continue" class="btn-primary">계속하기 (Respawn)</button>
+        </div>
+    </div>
+
+    <script src="game.js"></script>
+</body>
+
+</html>

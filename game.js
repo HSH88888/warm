@@ -43,6 +43,10 @@ class Game {
         this.isPaused = false;
         this.bgmOn = false;
 
+        this.startTime = 0;
+        this.lastMilestone = 0;
+        this.loadMilestones();
+
         this.initInput();
         this.loop();
     }
@@ -187,6 +191,8 @@ class Game {
         this.difficulty = diffBtn ? diffBtn.dataset.diff : 'normal';
 
         this.isRunning = true;
+        this.startTime = Date.now();
+        this.lastMilestone = 0;
 
         this.foods = [];
         for (let i = 0; i < FOOD_COUNT; i++) this.spawnFood();
@@ -330,8 +336,16 @@ class Game {
 
     updateHUD() {
         if (!this.player) return;
-        document.getElementById('score-length').innerText = Math.floor(this.player.length);
+        const currentLen = Math.floor(this.player.length);
+        document.getElementById('score-length').innerText = currentLen;
         document.getElementById('score-kill').innerText = this.player.kills;
+
+        // Milestone Check
+        const block = Math.floor(currentLen / 1000) * 1000;
+        if (block > 0 && block > this.lastMilestone) {
+            this.recordMilestone(block);
+            this.lastMilestone = block;
+        }
 
         const sorted = [...this.worms].sort((a, b) => b.length - a.length);
         const list = document.getElementById('leaderboard-list');
@@ -348,6 +362,48 @@ class Game {
     toggleBGM() {
         this.bgmOn = !this.bgmOn;
         document.getElementById('btn-bgm').innerText = this.bgmOn ? "🔊 BGM ON" : "🔇 BGM OFF";
+    }
+
+    recordMilestone(score) {
+        const elapsed = (Date.now() - this.startTime) / 1000;
+        const mins = Math.floor(elapsed / 60);
+        const secs = Math.floor(elapsed % 60);
+        const timeStr = `${mins}:${secs.toString().padStart(2, '0')}`;
+
+        const record = {
+            name: this.playerName,
+            score: score,
+            time: timeStr,
+            diff: this.difficulty
+        };
+
+        // Save
+        const records = JSON.parse(localStorage.getItem('warm_milestones') || '[]');
+        records.unshift(record); // Add to top
+        if (records.length > 50) records.pop(); // Limit
+        localStorage.setItem('warm_milestones', JSON.stringify(records));
+
+        this.addMilestoneToUI(record);
+    }
+
+    loadMilestones() {
+        const list = document.getElementById('milestone-list');
+        list.innerHTML = '';
+        const records = JSON.parse(localStorage.getItem('warm_milestones') || '[]');
+        // Reverse to ensure newest is at top after prepending
+        [...records].reverse().forEach(r => this.addMilestoneToUI(r));
+    }
+
+    addMilestoneToUI(r) {
+        const list = document.getElementById('milestone-list');
+        const li = document.createElement('li');
+        li.innerHTML = `
+            <span>${r.name} (${r.score})</span>
+            <span>${r.time} [${r.diff}]</span>
+        `;
+        list.prepend(li); // Show newest on top logic (but loop usually appends)
+        // Actually loadMilestones should append, but recordMilestone should prepend.
+        // Let's just prepend always so newest is top.
     }
 
     gameOver() {

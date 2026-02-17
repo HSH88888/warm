@@ -40,6 +40,7 @@ class Game {
         };
 
         this.isRunning = false;
+        this.isPaused = false;
         this.bgmOn = false;
 
         this.initInput();
@@ -67,6 +68,7 @@ class Game {
 
         window.addEventListener('keydown', e => {
             if (e.code === 'Space') this.mouse.down = true;
+            if (e.code === 'Escape') this.togglePause();
         });
         window.addEventListener('keyup', e => {
             if (e.code === 'Space') this.mouse.down = false;
@@ -135,6 +137,11 @@ class Game {
         });
 
         document.getElementById('btn-bgm').addEventListener('click', () => this.toggleBGM());
+        document.getElementById('btn-pause').addEventListener('click', () => this.togglePause());
+
+        // Pause Menu Buttons
+        document.getElementById('btn-resume').addEventListener('click', () => this.togglePause());
+        document.getElementById('btn-quit').addEventListener('click', () => location.reload());
 
         // Color Picker Logic
         document.querySelectorAll('.color-option').forEach(opt => {
@@ -218,7 +225,7 @@ class Game {
 
     loop() {
         requestAnimationFrame(() => this.loop());
-        if (!this.isRunning) return;
+        if (!this.isRunning || this.isPaused) return;
 
         this.update();
         this.draw();
@@ -291,6 +298,23 @@ class Game {
             ctx.arc(mx, my, w.isPlayer ? 3 : 2, 0, Math.PI * 2);
             ctx.fill();
         });
+    }
+
+    togglePause() {
+        if (!this.isRunning) return;
+        this.isPaused = !this.isPaused;
+        const menu = document.getElementById('pause-menu');
+        const mobile = document.getElementById('mobile-controls');
+
+        if (this.isPaused) {
+            menu.style.display = 'flex';
+            if (mobile) mobile.style.display = 'none';
+        } else {
+            menu.style.display = 'none';
+            if ('ontouchstart' in window || navigator.maxTouchPoints > 0) {
+                if (mobile) mobile.style.display = 'block';
+            }
+        }
     }
 
     updateHUD() {

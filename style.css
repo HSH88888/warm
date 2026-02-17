@@ -231,7 +231,8 @@ body {
     pointer-events: auto;
 }
 
-#btn-bgm {
+#btn-bgm,
+#btn-pause {
     background: none;
     border: 1px solid #555;
     color: #888;
@@ -239,11 +240,53 @@ body {
     border-radius: 5px;
     cursor: pointer;
     font-size: 0.8rem;
+    transition: all 0.2s;
 }
 
-#btn-bgm:hover {
+#btn-pause {
+    font-size: 1rem;
+    margin-left: 10px;
+}
+
+#btn-bgm:hover,
+#btn-pause:hover {
     color: white;
     border-color: white;
+    transform: scale(1.1);
+}
+
+/* Pause Menu */
+#pause-menu {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.7);
+    backdrop-filter: blur(5px);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    z-index: 300;
+}
+
+#pause-menu h2 {
+    font-size: 4rem;
+    color: white;
+    margin-bottom: 40px;
+    letter-spacing: 10px;
+    text-shadow: 0 0 20px rgba(255, 255, 255, 0.5);
+}
+
+.pause-options {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+}
+
+.pause-options button {
+    width: 250px;
 }
 
 /* Game Over Styling */

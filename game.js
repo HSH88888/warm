@@ -276,6 +276,7 @@ class Game {
         }
 
         // Apply Transform: Center Screen -> Scale -> Translate to Camera World Pos
+        ctx.save();
         ctx.translate(this.canvas.width / 2, this.canvas.height / 2);
         ctx.scale(this.camera.zoom, this.camera.zoom);
         ctx.translate(-this.camera.x, -this.camera.y);
